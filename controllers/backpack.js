@@ -1,3 +1,4 @@
+const _ = require('underscore');
 const openbadger = require('../openbadger');
 const db = require('../db');
 const claim = db.model('Claim');
@@ -92,43 +93,26 @@ module.exports = function (app) {
     });
   });
 
-  app.get('/favorites/:view?', function (req, res, next) {
-    var badge = {
-      thumbnail: '/media/images/badge.png',
-      description: 'Badge blah in voluptate velit...',
-      url: '/badges/ae784f'
-    };
-
-    var org = {
-      thumbnail: '/media/images/org.png',
-      description: 'Organisation blah irure...',
-      url: '/orgs/some-organisation'
-    };
-
-    var program = {
-      thumbnail: '/media/images/program.png',
-      description: 'Program blah sed eiusmod...',
-      url: '/programs/ae784f'
-    };
-
-    var view = req.params.view,
-        favorites = [badge, org, badge, program];
-
-    switch (view) {
-      case 'badges':
-        favorites = [badge, badge]; break;
-      case 'programs':
-        favorites = [program];
-      case 'orgs':
-        favorites = [org]; break;
-      default:
-        view = null;
-    }
-
-    res.render('user/bookmarks.html', {
-      items: favorites,
-      view: view
-    })
-  })
+  app.get('/myapplications', [
+    loggedIn
+  ], function (req, res, next) {
+    var user = req.session.user;
+    user.getApplications().success(function(applications){
+      var shortnames = _.map(applications, function(application){
+        return application.badgeId;
+      });
+      openbadger.getBadges(function(err, data) {
+        var appliedFor = _.filter(data.badges, function(badge) {
+          return shortnames.indexOf(badge.id) !== -1;
+        });
+        res.render('user/applications.html', {
+          items: _.map(appliedFor, function(badge) {
+            badge.url = '/myapplications/' + badge.id;
+            return badge;
+          })
+        });
+      });
+    });
+  });
 
 };

@@ -404,6 +404,7 @@ test('api.get', function(t) {
     var get = requestMock.expects('get').callsArgWith(2, 'Error');
 
     api.get('/foo', function(err, data){
+      console.log('%%%%%%%%%%%%%%%%%%%', err, data);
       t.similar(err, { code: 500, name: 'Internal', message: 'Error' }, 'error');
       t.notOk(data, 'no data');
       requestMock.restore();
